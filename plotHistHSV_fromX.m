@@ -4,7 +4,6 @@ function plotHistHSV_fromX(X, numbins, filename)
     hold on
     plot(X(1, numbins+1 : numbins*2), 'g');
     hold on
-    plot(X(1, numbins*2 +1 : numbins*3), 'b');
     title(['histograma HSV de la imatge ', filename]);
-    legend('H', 'S', 'V');
+    legend('H', 'S');
 end
