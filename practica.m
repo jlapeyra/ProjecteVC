@@ -135,7 +135,6 @@ function X = getX_HistHSV(R, numbins)
     listedges = linspace(0, 1, numbins+1);
     X(1:numbins) =               histcounts(R(:,:,1), listedges);
     X(numbins+1 : numbins*2) =   histcounts(R(:,:,2), listedges);
-    X(numbins*2+1 : numbins*3) = histcounts(R(:,:,3), listedges);
     X(:) = X(:)/max(X(:));
 end
 
