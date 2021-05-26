@@ -12,5 +12,5 @@ end
 
 figure
 plot(b_accuracies);
-ylabel("balanced accuracy");
+ylabel("maximum balanced accuracy");
 xlabel("k");
