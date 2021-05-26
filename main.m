@@ -1,19 +1,27 @@
 % k = nombre de veïns a tenir en compte
+
 % numbins = sombre de bins de l'hisotgrama
+
 % rgb_hsv_hs == 1 : histograma en RGB
 % rgb_hsv_hs == 2 : histograma en HSV
 % rgb_hsv_hs == 3 : histograma en HS
+
+% si llindar <= 0, l'algoritme el selecciona com a llindar
+% altrament, slecciona el llindar que maximitza la balanced accuracy
+
 % imatges_pos = conjunt d'índexs d'imatges de test/validació 
 %               del Barça (classe positiva)
 % imatges_neg = conjunt d'índexs d'imatges de test/validació 
 %               de cada equip diferent al Barça (classe negativa)
+
 % plot == 0 : no facis plots
 % plot == 1 : fes plots de la corba ROC, etc
+
 
 % max_ba = balanced accuarcy màxima del classificador
 % area = àrea sota la corba ROC del calssificador
 
-function max_ba = main(k, numbins, rgb_hsv_hs, imatges_pos, imatges_neg, plot_)
+function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg, plot_)
     %%%%%% TRAIN %%%%%%
     num_train = 15;
     train_set = 1:num_train;
@@ -98,20 +106,21 @@ function max_ba = main(k, numbins, rgb_hsv_hs, imatges_pos, imatges_neg, plot_)
         subtitle(strcat("Area sota la corba = ", num2str(area)));
     end
 
-    
-    TNR = 1 - FPR;
-    balanced_accuracy = (TNR + TPR)/2;
-    if plot_ == 1
-        figure
-        plot(threshold, balanced_accuracy)
-        ylabel("Balanced accuracy");
-        xlabel("Threshold");
-        title("Balanced accuracy");
-    end
+    if llindar > 0
+        TNR = 1 - FPR;
+        balanced_accuracy = (TNR + TPR)/2;
+        if plot_ == 1
+            figure
+            plot(threshold, balanced_accuracy)
+            ylabel("Balanced accuracy");
+            xlabel("Threshold");
+            title("Balanced accuracy");
+        end
 
-    [max_ba, idx] = max(balanced_accuracy);
-    t = threshold(idx);
-    prediccio = scores > t;
+        [max_ba, idx] = max(balanced_accuracy);
+        llindar = threshold(idx);
+    end
+    prediccio = scores > llindar;
     real = labels == "b";
     
     aux = ["noBarça", "Barça"];
