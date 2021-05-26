@@ -1,0 +1,154 @@
+% k = nombre de veïns a tenir en compte
+% numbins = sombre de bins de l'hisotgrama
+% rgb == 0 : histograma en HSV
+% rgb == 1 : histograma en RGB
+% imatges_pos = conjunt d'índexs d'imatges de test/validació 
+%               del Barça (classe positiva)
+% imatges_neg = conjunt d'índexs d'imatges de test/validació 
+%               de cada equip diferent al Barça (classe negativa)
+% plot == 0 : no facis plots
+% plot == 1 : fes plots de la corba ROC, etc
+
+function r = main(k, numbins, rgb, imatges_pos, imatges_neg, plot)
+    %%%%%% TRAIN %%%%%%
+    num_train = 15;
+    train = 1:num_train;
+
+    finestresBD;
+    for i = 1 : num_train
+        num_img = train(i);
+        I = imread(getFilename('barcelona', num_img));
+        if rgb == 0
+            I = rgb2hsv(I);
+        end
+
+        R = getFinestra(I, finestres(num_img,:));
+
+       % figure
+       % imshow(R);
+
+        X_train(i,:) = getX_Hist(R, numbins, rgb);
+        %if rgb == 1 plotHistRGB_fromX(X_train(i,:), numbins, num2str(num_img));
+        %else plotHistHSV_fromX(X_train(i,:), numbins, num2str(num_img));
+        %end
+
+    end
+
+
+    %%%%%% VALIDACIÓ / TEST %%%%%%
+
+    equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
+
+    j = 1;
+    for equip = equips
+        if equip == "barcelona"
+            class = "b";
+            idx_imgs = imatges_pos;
+        else
+            class = "nb";
+            idx_imgs = imatges_neg;
+        end
+
+        for i = idx_imgs % recorrem les imatges de l'qeuip
+            fn = getFilename(convertStringsToChars(equip), i);
+            I = imread(fn);
+            if rgb == 0
+                I = rgb2hsv(I);
+            end
+            sz = size(I);
+            Idimensions = [sz(2), sz(1), sz(2), sz(1)];
+            for f = train_set % recorrem les finestres de train
+                finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
+                R = getFinestra(I, ceil(finestra));
+                X = getX_Hist(R, numbins, rgb);
+                heuristic(f) = getHeuristic(X_train, X, k);
+            end
+            [m,f] = min(heuristic);
+            finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
+            R = getFinestra(I, ceil(finestra));
+
+            %%%%mostra la finestra de la Ãºltima imatge de cada equip
+            %if i == 36
+                %figure
+                %imshow(R);
+            %end
+
+            %%%%mostra la finestra de cada imatge de cada equip
+            %figure
+            %imshow(R);
+
+            scores(j) = - min(heuristic);     
+            labels(j) = class;
+            j=j+1;
+        end
+    end
+
+    [FPR, TPR, threshold, area] = perfcurve(labels, scores, 'b');
+    if plot == 1
+        area
+        figure
+        plot(FPR, TPR)
+        ylabel("True Positive Rate");
+        xlabel("False Positive Rate");
+        title("Corba ROC");
+    end
+
+    
+    TNR = 1 - FPR;
+    balanced_accuracy = (TNR + TPR)/2;
+    if plot == 1
+        figure
+        plot(threshold, balanced_accuracy)
+        ylabel("Balanced accuracy");
+        xlabel("Threshold");
+        title("Balanced accuracy");
+    end
+
+    [maxim, idx] = max(balanced_accuracy);
+    t = threshold(idx);
+    prediccio = scores > t;
+    real = labels == "b";
+    
+    aux = ["noBarça", "Barça"];
+    prediccio = aux(1+prediccio);
+    real = aux(1+real);
+    if plot == 1
+        figure
+        M = confusionchart(real, prediccio);
+        title("Matriu de confusió");
+    end
+    r = maxim;
+end
+
+
+%%%%%%%%%-------FUNCIONS-------%%%%%%%%%
+
+function X = getX_Hist(R, numbins, rgb)
+    if rgb == 1
+        X = getX_HistRGB(R, numbins);
+    else
+        X = getX_HistHSV(R, numbins);
+    end
+end
+
+function X = getX_HistRGB(R, numbins)
+    listedges = linspace(0, 255, numbins+1);
+    X(1:numbins) =               histcounts(R(:,:,1), listedges);
+    X(numbins+1 : numbins*2) =   histcounts(R(:,:,2), listedges);
+    X(numbins*2+1 : numbins*3) = histcounts(R(:,:,3), listedges);
+    X(:) = X(:)/max(X(:));
+end
+
+function X = getX_HistHSV(R, numbins)
+    listedges = linspace(0, 1, numbins+1);
+    X(1:numbins) =               histcounts(R(:,:,1), listedges);
+    X(numbins+1 : numbins*2) =   histcounts(R(:,:,2), listedges);
+    X(:) = X(:)/max(X(:));
+end
+
+function h = getHeuristic(X_train, X, k)
+
+    [idx,d] = knnsearch(X_train, X, 'K', k);
+    h = mean(d);
+    
+end
