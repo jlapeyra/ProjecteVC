@@ -5,6 +5,7 @@
 % rgb_hsv_hs == 1 : histograma en RGB
 % rgb_hsv_hs == 2 : histograma en HSV
 % rgb_hsv_hs == 3 : histograma en HS
+% rgb_hsv_hs == 4 : histograma en H
 
 % si llindar <= 0, l'algoritme el selecciona com a llindar
 % altrament, slecciona el llindar que maximitza la balanced accuracy
@@ -52,6 +53,7 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
     equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
 
     j = 1;
+    loop_time = 0;
     for equip = equips
         if equip == "barcelona"
             class = "b";
@@ -67,6 +69,7 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
             if rgb_hsv_hs > 1
                 I = rgb2hsv(I);
             end
+            %tic;
             sz = size(I);
             Idimensions = [sz(2), sz(1), sz(2), sz(1)];
             for f = train_set % recorrem les finestres de train
@@ -92,9 +95,11 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
             scores(j) = - min(heuristic);     
             labels(j) = class;
             j=j+1;
+            %loop_time = loop_time + toc;
         end
     end
 
+    %loop_time % Mostra el temps utilitzat per a pendre decisions
     [FPR, TPR, threshold, area] = perfcurve(labels, scores, 'b');
     if plot_ == 1
         %area
@@ -146,8 +151,11 @@ function X = getX_Hist(R, numbins, rgb_hsv_hs)
     end
     
     X(1:numbins) =               histcounts(R(:,:,1), listedges);
-    X(numbins+1 : numbins*2) =   histcounts(R(:,:,2), listedges);
     
+    if rgb_hsv_hs < 4 % RGB, HSV, HS
+        X(numbins+1 : numbins*2) =   histcounts(R(:,:,2), listedges);
+    end
+
     if rgb_hsv_hs < 3 % RGB, HSV
         X(numbins*2+1 : numbins*3) = histcounts(R(:,:,3), listedges);
     end
