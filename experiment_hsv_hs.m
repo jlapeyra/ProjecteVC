@@ -13,6 +13,9 @@ disp("HSV:");
 disp("HS:");
 %main(k, numbins, 3, llindar, validacio_pos, validacio_neg, plot_);
 
+disp("H:");
+%main(k, numbins, 4, llindar, validacio_pos, validacio_neg, plot_);
+
 disp("RGB:");
 main(k, numbins, 1, llindar, validacio_pos, validacio_neg, plot_);
 
