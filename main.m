@@ -22,42 +22,45 @@
 % max_ba = balanced accuarcy màxima del classificador
 % area = àrea sota la corba ROC del calssificador
 
-function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg, plot_)
+function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
     %%%%%% TRAIN %%%%%%
     num_train = 15;
     train_set = 1:num_train;
-    equips = {'acmilan', 'barcelona', 'chelsea', 'juventus', 'liverpool', 'madrid', 'psv'};
+    equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
+    num_equips = 7;
     
-    aux = 0;
+    aux = 1;
     finestresBD;
-    for j = 1 : 7
+    for j = 1 : num_equips
         for i = 1 : num_train
             num_img = train_set(i);
-            I = imread(getFilename(equips(j), num_img));
+            I = imread(getFilename(convertStringsToChars(equips(j)), num_img));
             if rgb_hsv_hs > 1
                 I = rgb2hsv(I);
             end
 
-            R = getFinestra(I, finestres(j,num_img,:));
+            R = getFinestra(I, finestresNEW(num_img,:,j));
 
            % figure
            % imshow(R);
-            aux = aux + 1;
+            
             X_train(aux,:) = getX_Hist(R, numbins, rgb_hsv_hs);
-            Y_train(aux,:) = equips(j);
+            Y_train(aux,:) = j; %equips(j);
+            
+            aux = aux + 1;
         end
     end
     
 
     %%%%%% VALIDACIÓ / TEST %%%%%%
 
-    j = 1;
-    loop_time = 0;
-    for equip = equips
-        class = equip;
-        idx_imgs = imatges_pos;
+    aux = 1;
+    %loop_time = 0;
+    for j = 1 : num_equips
+        equip = equips(j);
+        class = j;
         
-        for i = idx_imgs % recorrem les imatges de l'equip
+        for i = indexs_imatges % recorrem les imatges de l'equip
             fn = getFilename(convertStringsToChars(equip), i);
             I = imread(fn);
             if rgb_hsv_hs > 1
@@ -70,67 +73,44 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
                 finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
                 R = getFinestra(I, ceil(finestra));
                 X = getX_Hist(R, numbins, rgb_hsv_hs);
-                heuristic(f) = predict(X_train, Y_train, X, k);
+                [predictions(f), distances(f)] = predict(X_train, Y_train, X, k);
             end
-            [m,f] = min(heuristic);
-            finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
-            R = getFinestra(I, ceil(finestra));
-
-            %%%%mostra la finestra de la Ãºltima imatge de cada equip
-            %if i == 36
-                %figure
-                %imshow(R);
-            %end
-
+            [m,f] = min(distances);
+            
+            Y_predicted(aux) = predictions(f);
+            Y_true(aux) = class; 
+            
+            
             %%%%mostra la finestra de cada imatge de cada equip
+            %finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
+            %R = getFinestra(I, ceil(finestra));
             %figure
             %imshow(R);
 
-            scores(j) = - min(heuristic);     
-            labels(j) = class;
-            j=j+1;
+            %scores(j) = - min(heuristic);     
+            %labels(j) = class;
+            
+            aux=aux+1;
             %loop_time = loop_time + toc;
         end
     end
 
-    %loop_time % Mostra el temps utilitzat per a pendre decisions
-    [FPR, TPR, threshold, area] = perfcurve(labels, scores, 'b');
-    if plot_ == 1
-        %area
-        figure
-        plot(FPR, TPR)
-        ylabel("True Positive Rate");
-        xlabel("False Positive Rate");
-        title("Corba ROC");
-        disp(strcat("Area sota la corba = ", num2str(area)));
-    end
-
-    if llindar > 0
-        TNR = 1 - FPR;
-        balanced_accuracy = (TNR + TPR)/2;
-        if plot_ == 1
-            figure
-            plot(threshold, balanced_accuracy)
-            ylabel("Balanced accuracy");
-            xlabel("Threshold");
-            title("Balanced accuracy");
-        end
-
-        [max_ba, idx] = max(balanced_accuracy);
-        llindar = threshold(idx);
-    end
-    prediccio = scores > llindar;
     
     %real = labels == "b";
     
-    aux = equips;
-    prediccio = aux(1+prediccio);
-    real = aux(1+real);
+%     aux = equips;
+%     prediccio = aux(1+prediccio);
+%     real = aux(1+real);
+
+    encert = (Y_true == Y_predicted);
+    accuracy = mean(encert);
+    
     
     if plot_ == 1
+        accuracy
         figure
-        M = confusionchart(real, prediccio);
-        title("Matriu de confusi�");
+        M = confusionchart(Y_true, Y_predicted);
+        title("Matriu de confusió");
     end
 end
 
@@ -158,17 +138,42 @@ function X = getX_Hist(R, numbins, rgb_hsv_hs)
     X(:) = X(:)/max(X(:));
 end
 
-function h = getHeuristic(X_train, X, k)
+function [prediccio, distancia] = predict(X_train, Y_train, X, k)
 
     [idx,d] = knnsearch(X_train, X, 'K', k);
-    h = mean(d);
+    equips_propers = Y_train(idx);
+    prediccio = mode(equips_propers);
+    distancia = mean(d(equips_propers == prediccio));
     
 end
 
-function h = predict(X_train, Y_trian, X, k)
 
-    [idx,d] = knnsearch(X_train, X, 'K', k);
-    aux = Y_train(idx);
-    h = mode(aux);
-    
-end
+
+
+    %loop_time % Mostra el temps utilitzat per a pendre decisions
+%     [FPR, TPR, threshold, area] = perfcurve(labels, scores, 'b');
+%     if plot_ == 1
+%         %area
+%         figure
+%         plot(FPR, TPR)
+%         ylabel("True Positive Rate");
+%         xlabel("False Positive Rate");
+%         title("Corba ROC");
+%         disp(strcat("Area sota la corba = ", num2str(area)));
+%     end
+% 
+%     if llindar > 0
+%         TNR = 1 - FPR;
+%         balanced_accuracy = (TNR + TPR)/2;
+%         if plot_ == 1
+%             figure
+%             plot(threshold, balanced_accuracy)
+%             ylabel("Balanced accuracy");
+%             xlabel("Threshold");
+%             title("Balanced accuracy");
+%         end
+% 
+%         [max_ba, idx] = max(balanced_accuracy);
+%         llindar = threshold(idx);
+%     end
+%     prediccio = scores > llindar;

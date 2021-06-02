@@ -56,7 +56,7 @@ finestres = [
     96, 60, 224, 349;   %36
     ];
 
-finestresNEW = [ %ACMilan
+finestresNEW(:,:,1) = [ %ACMilan
     166, 107, 92, 107;      %1
     145, 88, 109, 171       %2
     63   276   230   111    %3
