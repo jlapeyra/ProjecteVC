@@ -108,7 +108,7 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
         ylabel("True Positive Rate");
         xlabel("False Positive Rate");
         title("Corba ROC");
-        subtitle(strcat("Area sota la corba = ", num2str(area)));
+        disp(strcat("Area sota la corba = ", num2str(area)));
     end
 
     if llindar > 0
@@ -128,14 +128,14 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
     prediccio = scores > llindar;
     real = labels == "b";
     
-    aux = ["noBarÃ§a", "BarÃ§a"];
+    aux = ["noBarça", "Barça"];
     prediccio = aux(1+prediccio);
     real = aux(1+real);
     
     if plot_ == 1
         figure
         M = confusionchart(real, prediccio);
-        title("Matriu de confusiÃ³");
+        title("Matriu de confusió");
     end
 end
 
