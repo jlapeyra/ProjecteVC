@@ -8,53 +8,25 @@
 %rect(1)+rect(3);
 %floor(rect)
 
-for i = 1:16
-    I = imread(getFilename('barcelona', i));
-    sz = size(I);
-    dimensions(i,4) = sz(1);
-    dimensions(i,2) = sz(1);
-    dimensions(i,1) = sz(2);
-    dimensions(i,3) = sz(2);
+equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
+
+for j = 1:7
+    for i = 1:36
+        I = imread(getFilename(equips(j), i));
+        sz = size(I);
+        dimensions(i,4,j) = sz(1);
+        dimensions(i,2,j) = sz(1);
+        dimensions(i,1,j) = sz(2);
+        dimensions(i,3,j) = sz(2);
+        
+   % EQUIVALENT:
+%         dimensions(i,1,j) = sz(2);
+%         dimensions(i,2,j) = sz(1);
+%         dimensions(i,3,j) = sz(2);
+%         dimensions(i,4,j) = sz(1);
+    end
 end
 
-finestres = [
-    188, 86, 396, 340;  %1
-    12, 96, 314, 363;   %2
-    117, 48, 243, 201;  %3
-    91, 174, 91, 174;   %4
-    13, 180, 299, 416;  %5
-    38, 7, 346, 170;    %6
-    11, 96, 280, 410;   %7
-    27, 112, 192, 319;  %8
-    80, 79, 191, 260;   %9
-    152, 122, 329, 401; %10
-    1, 76, 300, 219;    %11
-    138, 65, 300, 244;  %12
-    31, 70, 251, 197;   %13
-    12, 104, 320, 237;  %14
-    141, 106, 211, 188; %15
-    81, 42, 320, 197;   %16
-    58, 66, 242, 226;   %17
-    90, 76, 336, 268;   %18
-    143, 49, 315, 169;  %19
-    94, 40, 315, 254;   %20
-    184, 94, 307, 302;  %21
-    42, 141, 182, 403;  %22
-    149, 114, 265, 314; %23
-    151, 197, 295, 456; %24
-    62, 48, 106, 137;   %25
-    31, 246, 226, 406;  %26
-    59, 135, 237, 380;  %27
-    12, 59, 218, 198;   %28
-    70, 125, 249, 442;  %29
-    5, 206, 199, 326;   %30
-    8, 58, 242, 181;    %31
-    30, 74, 211, 195;   %32
-    113, 125, 233, 301; %33
-    21, 152, 391, 407;  %34
-    30, 115, 240, 355;  %35
-    96, 60, 224, 349;   %36
-    ];
 
 finestresNEW(:,:,1) = [ %ACMilan
     166, 107, 92, 107;      %1
@@ -129,7 +101,7 @@ finestresNEW(:, :, 2) = [ % Barcelona
     149, 114, 265, 314; %23
     151, 197, 295, 456; %24
     62, 48, 106, 137;   %25
-    31, 246, 226, 406;  %26
+    31, 246, 226, 405;  %26
     59, 135, 237, 380;  %27
     12, 59, 218, 198;   %28
     70, 125, 249, 442;  %29
@@ -241,7 +213,7 @@ finestresNEW(:, :, 5) = [ % Liverpool
     17    46   274   123    %17
     42    80   348   182    %18
    104    57   128   187    %19
-     0    78   291    74    %20
+     1    78   291    74    %20
     60    92   260   142    %21
    153    61   156   117    %22
     54   100   271   156    %23
@@ -337,3 +309,40 @@ finestresNEW(:, :, 7) = [ % PSV
     76   141   361   108    %35
     78    75   101   142    %36
 ];
+
+for j = 1:7
+    for i = 1:36
+        if (finestresNEW(i,1,j) > finestresNEW(i,3,j))
+            tmp = finestresNEW(i,1,j);
+            finestresNEW(i,1,j) = finestresNEW(i,3,j);
+            finestresNEW(i,3,j) = tmp;
+            %disp(['error imparells: equip ' num2str(j) 'img ' num2str(i)]);
+        end
+        if (finestresNEW(i,2,j) > finestresNEW(i,4,j))
+            tmp = finestresNEW(i,2,j);
+            finestresNEW(i,2,j) = finestresNEW(i,4,j);
+            finestresNEW(i,4,j) = tmp;
+            %disp(['error   parells: equip ' num2str(j) 'img ' num2str(i)]);
+        end
+  
+        
+% per saber quines finestres tenen amplada o alçada 1 píxel descomenteu això:
+
+%         if (finestresNEW(i,1,j) == finestresNEW(i,3,j))
+%             disp(['error imparells: equip ' num2str(j) ' img ' num2str(i)]);
+%         end
+%         if (finestresNEW(i,2,j) == finestresNEW(i,4,j))
+%             disp(['error   parells: equip ' num2str(j) ' img ' num2str(i)]);
+%         end
+        
+        
+        assert(finestresNEW(i,1,j) <= finestresNEW(i,3,j))
+        assert(finestresNEW(i,2,j) <= finestresNEW(i,4,j))
+        for k = 1:4
+            f = finestresNEW(i,k,j);
+            d =   dimensions(i,k,j);
+            assert(f <= d);
+            assert(f > 0);
+        end
+    end
+end

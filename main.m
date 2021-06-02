@@ -6,25 +6,17 @@
 % rgb_hsv_hs == 2 : histograma en HSV
 % rgb_hsv_hs == 3 : histograma en HS
 % rgb_hsv_hs == 4 : histograma en H
+% rgb_hsv_hs == 5 : histograma en RGB normalitzat per il-luminació
 
-% si llindar <= 0, l'algoritme el selecciona com a llindar
-% altrament, slecciona el llindar que maximitza la balanced accuracy
-
-% imatges_pos = conjunt d'índexs d'imatges de test/validació 
-%               del Barça (classe positiva)
-% imatges_neg = conjunt d'índexs d'imatges de test/validació 
-%               de cada equip diferent al Barça (classe negativa)
+% indexs_imatges = conjunt d'índexs d'imatges de test/validació 
 
 % plot == 0 : no facis plots
-% plot == 1 : fes plots de la corba ROC, etc
+% plot == 1 : fes plots de la matriu de confusió, etc
 
-
-% max_ba = balanced accuarcy màxima del classificador
-% area = àrea sota la corba ROC del calssificador
 
 function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
     %%%%%% TRAIN %%%%%%
-    num_train = 15;
+    num_train = 20;
     train_set = 1:num_train;
     equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
     num_equips = 7;
@@ -34,7 +26,7 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
     for j = 1 : num_equips
         for i = 1 : num_train
             num_img = train_set(i);
-            I = imread(getFilename(convertStringsToChars(equips(j)), num_img));
+            I = imread(getFilename(equips(j), num_img));
             if rgb_hsv_hs > 1
                 I = rgb2hsv(I);
             end
@@ -51,6 +43,33 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
         end
     end
     
+    
+    %%%%%% GENEREM POSSIBLES FINESTRES PER VALIDACIÓ/TRAIN %%%%%
+    
+    f = 1;
+    for equip_f = 1 : num_equips
+        for i_f = 1 : num_train  % recorrem les finestres de train
+            finestra = finestresNEW(i_f, :, equip_f) ./ dimensions(i_f, :, equip_f);
+            assert(max(finestra) <= 1);
+            assert(min(finestra) > 0);
+            finestres(f, :) = finestra(:);
+            f = f + 1;
+        end
+    end
+%     for i=1:100
+%         a1 = rand(); a2 = rand();
+%         b1 = rand(); b2 = rand();
+%         finestra = [min(a1,a2), min(b1,b2), max(a1,a2), max(b1,b2)];
+%         assert(max(finestra) <= 1);
+%         assert(min(finestra) > 0);
+%         finestres(f, :) = finestra(:);
+%         f = f + 1;
+%     end
+    
+    
+    
+    
+    
 
     %%%%%% VALIDACIÓ / TEST %%%%%%
 
@@ -61,34 +80,46 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
         class = j;
         
         for i = indexs_imatges % recorrem les imatges de l'equip
-            fn = getFilename(convertStringsToChars(equip), i);
+            fn = getFilename(equip, i);
             I = imread(fn);
             if rgb_hsv_hs > 1
                 I = rgb2hsv(I);
             end
             %tic;
+            
             sz = size(I);
             Idimensions = [sz(2), sz(1), sz(2), sz(1)];
-            for f = train_set % recorrem les finestres de train
-                finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
-                R = getFinestra(I, ceil(finestra));
+            [num_finestres, quatre] = size(finestres);
+            for f = 1:num_finestres
+                finestra = finestres(f,:) .* Idimensions;
+                finestra = ceil(finestra);
+
+                assert(finestra(1) <= finestra(3));
+                assert(finestra(2) <= finestra(4));
+                assert(min(finestra <= Idimensions) == 1);
+                assert(max(1 <= finestra) == 1);
+
+                R = getFinestra(I, finestra);
+                assert(not( isempty(R)));
                 X = getX_Hist(R, numbins, rgb_hsv_hs);
-                [predictions(f), distances(f)] = predict(X_train, Y_train, X, k);
+                [predictions(f), distancia] = predict(X_train, Y_train, X, k);
+                
+                sz = size(R);
+                heuristiques(f) = distancia; %/(sz(1)+sz(2));
+                  
             end
-            [m,f] = min(distances);
+            [m,f] = min(heuristiques);
             
             Y_predicted(aux) = predictions(f);
             Y_true(aux) = class; 
             
             
             %%%%mostra la finestra de cada imatge de cada equip
-            %finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
-            %R = getFinestra(I, ceil(finestra));
-            %figure
-            %imshow(R);
-
-            %scores(j) = - min(heuristic);     
-            %labels(j) = class;
+%             finestra = finestres(f,:) .* Idimensions;
+%             finestra = ceil(finestra);
+%             R = getFinestra(hsv2rgb(I), finestra);
+%             figure
+%             montage({hsv2rgb(I),R});
             
             aux=aux+1;
             %loop_time = loop_time + toc;
@@ -125,10 +156,10 @@ function X = getX_Hist(R, numbins, rgb_hsv_hs)
         listedges = linspace(0, 1, numbins+1);
     end
     
-    X(1:numbins) =               histcounts(R(:,:,1), listedges);
+    X(1:numbins) = histcounts(R(:,:,1), listedges);
     
     if rgb_hsv_hs < 4 % RGB, HSV, HS
-        X(numbins+1 : numbins*2) =   histcounts(R(:,:,2), listedges);
+        X(numbins+1 : numbins*2) = histcounts(R(:,:,2), listedges);
     end
 
     if rgb_hsv_hs < 3 % RGB, HSV
@@ -138,12 +169,25 @@ function X = getX_Hist(R, numbins, rgb_hsv_hs)
     X(:) = X(:)/max(X(:));
 end
 
-function [prediccio, distancia] = predict(X_train, Y_train, X, k)
+function [prediccio, diatancia] = predict(X_train, Y_train, X, k)
+
+    
 
     [idx,d] = knnsearch(X_train, X, 'K', k);
     equips_propers = Y_train(idx);
     prediccio = mode(equips_propers);
-    distancia = mean(d(equips_propers == prediccio));
+    diatancia = mean(d(equips_propers == prediccio));
+        
+    
+%         [idx,d] = knnsearch(X_train, X, 'K', k);
+%         equips_propers = Y_train(idx);
+%         puntuacio_equip = zeros(7,1);
+%         for i=1:k
+%             puntuacio_equip(equips_propers(k)) = puntuacio_equip(equips_propers(k)) + 1.0/(d(k)+0.000001);
+%         end
+%         [m, prediccio] = max(puntuacio_equip);
+%         heuristica = -m;
+      
     
 end
 
