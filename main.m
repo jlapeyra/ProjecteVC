@@ -26,44 +26,38 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
     %%%%%% TRAIN %%%%%%
     num_train = 15;
     train_set = 1:num_train;
-
+    equips = {'acmilan', 'barcelona', 'chelsea', 'juventus', 'liverpool', 'madrid', 'psv'};
+    
+    aux = 0;
     finestresBD;
-    for i = 1 : num_train
-        num_img = train_set(i);
-        I = imread(getFilename('barcelona', num_img));
-        if rgb_hsv_hs > 1
-            I = rgb2hsv(I);
+    for j = 1 : 7
+        for i = 1 : num_train
+            num_img = train_set(i);
+            I = imread(getFilename(equips(j), num_img));
+            if rgb_hsv_hs > 1
+                I = rgb2hsv(I);
+            end
+
+            R = getFinestra(I, finestres(j,num_img,:));
+
+           % figure
+           % imshow(R);
+            aux = aux + 1;
+            X_train(aux,:) = getX_Hist(R, numbins, rgb_hsv_hs);
+            Y_train(aux,:) = equips(j);
         end
-
-        R = getFinestra(I, finestres(num_img,:));
-
-       % figure
-       % imshow(R);
-
-        X_train(i,:) = getX_Hist(R, numbins, rgb_hsv_hs);
-        %if rgb == 1 plotHistRGB_fromX(X_train(i,:), numbins, num2str(num_img));
-        %else plotHistHSV_fromX(X_train(i,:), numbins, num2str(num_img));
-        %end
-
     end
-
+    
 
     %%%%%% VALIDACIÃ“ / TEST %%%%%%
-
-    equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
 
     j = 1;
     loop_time = 0;
     for equip = equips
-        if equip == "barcelona"
-            class = "b";
-            idx_imgs = imatges_pos;
-        else
-            class = "nb";
-            idx_imgs = imatges_neg;
-        end
-
-        for i = idx_imgs % recorrem les imatges de l'qeuip
+        class = equip;
+        idx_imgs = imatges_pos;
+        
+        for i = idx_imgs % recorrem les imatges de l'equip
             fn = getFilename(convertStringsToChars(equip), i);
             I = imread(fn);
             if rgb_hsv_hs > 1
@@ -76,7 +70,7 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
                 finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
                 R = getFinestra(I, ceil(finestra));
                 X = getX_Hist(R, numbins, rgb_hsv_hs);
-                heuristic(f) = getHeuristic(X_train, X, k);
+                heuristic(f) = predict(X_train, Y_train, X, k);
             end
             [m,f] = min(heuristic);
             finestra = finestres(f,:) ./ dimensions(f,:) .* Idimensions;
@@ -126,9 +120,10 @@ function max_ba = main(k, numbins, rgb_hsv_hs, llindar, imatges_pos, imatges_neg
         llindar = threshold(idx);
     end
     prediccio = scores > llindar;
-    real = labels == "b";
     
-    aux = ["noBarça", "Barça"];
+    %real = labels == "b";
+    
+    aux = equips;
     prediccio = aux(1+prediccio);
     real = aux(1+real);
     
@@ -167,5 +162,13 @@ function h = getHeuristic(X_train, X, k)
 
     [idx,d] = knnsearch(X_train, X, 'K', k);
     h = mean(d);
+    
+end
+
+function h = predict(X_train, Y_trian, X, k)
+
+    [idx,d] = knnsearch(X_train, X, 'K', k);
+    aux = Y_train(idx);
+    h = mode(aux);
     
 end
