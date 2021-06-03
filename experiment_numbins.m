@@ -13,5 +13,5 @@ end
 
 figure
 plot(b_accuracies);
-ylabel("maximum balanced accuracy");
+ylabel("accuracy");
 xlabel("numbins");

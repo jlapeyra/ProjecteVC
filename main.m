@@ -1,4 +1,4 @@
-% k = nombre de veïns a tenir en compte
+% k = nombre de veïns que knn té en compte
 
 % numbins = sombre de bins de l'hisotgrama
 
@@ -7,32 +7,24 @@
 % rgb_hsv_hs == 3 : histograma en HS
 % rgb_hsv_hs == 4 : histograma en H
 
-% si llindar <= 0, l'algoritme el selecciona com a llindar
-% altrament, slecciona el llindar que maximitza la balanced accuracy
+% metode_tria_finestra indica el mètode amb què l'algoritme tria la
+%                       finestra òptima a test/validació
+% metode_tria_finestra == 1 : mètode 1
+% metode_tria_finestra == 2 : mètode 2
 
-% imatges_pos = conjunt d'índexs d'imatges de test/validació 
-%               del Barça (classe positiva)
-% imatges_neg = conjunt d'índexs d'imatges de test/validació 
-%               de cada equip diferent al Barça (classe negativa)
+% indexs_imatges = conjunt d'índexs d'imatges de test/validació 
 
 % plot == 0 : no facis plots
-% plot == 1 : fes plots de la corba ROC, etc
+% plot == 1 : fes plots de la matriu de confusió, etc
 
+function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_imatges, plot_)
 
-% max_ba = balanced accuarcy màxima del classificador
-% area = àrea sota la corba ROC del calssificador
-
-function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
-
-    
 
     %%%%%% TRAIN %%%%%%
     num_train = 26;
     train_set = 1:num_train;
     equips = ["acmilan", "barcelona", "chelsea", "juventus", "liverpool", "madrid", "psv"];
     num_equips = 7;
-    
-    
     
     aux = 1;
     finestresBD;
@@ -58,7 +50,6 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
     
     
     
-    
 
     %%%%%% VALIDACIÓ / TEST %%%%%%
 
@@ -67,7 +58,6 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
     for j = 1 : num_equips
         equip = equips(j);
         class = j;
-        
         
         
         for i = indexs_imatges % recorrem les imatges de l'equip
@@ -89,15 +79,18 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
                     f = f + 1;
                 end
             end
-            %[m,f] = min(distances);
             
-            isnan_diff = isnan(diff);
-            if sum(isnan_diff) > 0 % en algun cas knn s'ha trobat amb un sol equip
-                predictions = predictions(isnan_diff);
-                dist = dist(isnan_diff);
+            if metode_tria_finestra == 1
                 [m,f] = min(dist);
-            else % en tots els casos knn s'ha trobat amb més d'un equip
-                [m,f] = max(diff);
+            else
+                isnan_diff = isnan(diff);
+                if sum(isnan_diff) > 0 % en algun cas knn s'ha trobat amb un sol equip
+                    predictions = predictions(isnan_diff);
+                    dist = dist(isnan_diff);
+                    [m,f] = min(dist);
+                else % en tots els casos knn s'ha trobat amb més d'un equip
+                    [m,f] = max(diff);
+                end
             end
             
             Y_predicted(aux) = predictions(f);
@@ -134,7 +127,7 @@ function accuracy = main(k, numbins, rgb_hsv_hs, indexs_imatges, plot_)
     if plot_ == 1
         accuracy
         figure
-        M = confusionchart(Y_true, Y_predicted);
+        M = confusionchart(equips(Y_true), equips(Y_predicted));
         title("Matriu de confusió");
     end
 end

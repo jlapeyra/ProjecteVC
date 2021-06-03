@@ -304,18 +304,18 @@ finestresNEW(:, :, 7) = [ % PSV
 
 for j = 1:7
     for i = 1:36
-        if (finestresNEW(i,1,j) > finestresNEW(i,3,j))
-            tmp = finestresNEW(i,1,j);
-            finestresNEW(i,1,j) = finestresNEW(i,3,j);
-            finestresNEW(i,3,j) = tmp;
-            %disp(['error imparells: equip ' num2str(j) 'img ' num2str(i)]);
-        end
-        if (finestresNEW(i,2,j) > finestresNEW(i,4,j))
-            tmp = finestresNEW(i,2,j);
-            finestresNEW(i,2,j) = finestresNEW(i,4,j);
-            finestresNEW(i,4,j) = tmp;
-            %disp(['error   parells: equip ' num2str(j) 'img ' num2str(i)]);
-        end
+%         if (finestresNEW(i,1,j) > finestresNEW(i,3,j))
+%             tmp = finestresNEW(i,1,j);
+%             finestresNEW(i,1,j) = finestresNEW(i,3,j);
+%             finestresNEW(i,3,j) = tmp;
+%             disp(['error imparells: equip ' num2str(j) 'img ' num2str(i)]);
+%         end
+%         if (finestresNEW(i,2,j) > finestresNEW(i,4,j))
+%             tmp = finestresNEW(i,2,j);
+%             finestresNEW(i,2,j) = finestresNEW(i,4,j);
+%             finestresNEW(i,4,j) = tmp;
+%             disp(['error   parells: equip ' num2str(j) 'img ' num2str(i)]);
+%         end
   
         
 % per saber quines finestres tenen amplada o alçada 1 píxel descomenteu això:
