@@ -1,12 +1,11 @@
 clear
-test_pos = 28:36;
-test_neg = 19:36;
+indexs_imatges = 37:46;
+rgb_hsv_hs = 4;
 plot_ = 1;
-llindar = -1.07926; %indefinit
 
-k = 9;
-numbins = 7;
+k = 5;
+metode = 2;
+numbins = 17;
 
 disp("Resultat de test:");
-main(k, numbins, 2, llindar, test_pos, test_neg, plot_)
-
+main(k, numbins, rgb_hsv_hs, metode, indexs_imatges, plot_);

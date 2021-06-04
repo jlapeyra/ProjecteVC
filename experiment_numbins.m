@@ -1,17 +1,20 @@
 clear
-validacio_pos = 16:27;
-validacio_neg = 1:18;
-rgb_hsv_hs = 3;
+indexs_imatges = 27:36;
+rgb_hsv_hs = 2;
 plot_ = 0;
-llindar = 1; %indefinit
 
-k = 9;
+k = 5;
+metode = 2;
 
-parfor numbins = 1:20
-    b_accuracies(numbins) = main(k, numbins, rgb_hsv_hs, llindar, validacio_pos, validacio_neg, plot_);
+for numbins = 1:20
+    accuracies(numbins) = main(k, numbins, rgb_hsv_hs, metode, indexs_imatges, plot_);
+    disp("numbins:");
+    disp(numbins);
+    disp("accuracy:");
+    disp(accuracies(numbins));
 end
 
 figure
-plot(b_accuracies);
+plot(accuracies);
 ylabel("accuracy");
 xlabel("numbins");

@@ -1,21 +1,16 @@
 clear
-validacio_pos = 16:27;
-validacio_neg = 1:18;
+indexs_imatges = 27:36;
 plot_ = 1;
-llindar = 1; %indefinit
 
-k = 9;
-numbins = 7;
+k = 5;
+metode = 2;
+numbins = 17;
 
 disp("HSV:");
-%main(k, numbins, 2, llindar, validacio_pos, validacio_neg, plot_);
+rgb_hsv_hs = 2;
+main(k, numbins, rgb_hsv_hs, metode, indexs_imatges, plot_);
 
 disp("HS:");
-%main(k, numbins, 3, llindar, validacio_pos, validacio_neg, plot_);
-
-disp("H:");
-%main(k, numbins, 4, llindar, validacio_pos, validacio_neg, plot_);
-
-disp("RGB:");
-main(k, numbins, 1, llindar, validacio_pos, validacio_neg, plot_);
+rgb_hsv_hs = 3;
+main(k, numbins, rgb_hsv_hs, metode, indexs_imatges, plot_);
 

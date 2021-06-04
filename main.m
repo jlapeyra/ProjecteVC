@@ -128,7 +128,7 @@ function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_im
         accuracy
         figure
         M = confusionchart(equips(Y_true), equips(Y_predicted));
-        title("Matriu de confusiÃ³");
+        title("Matriu de confusió");
     end
 end
 
