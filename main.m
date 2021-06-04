@@ -1,4 +1,4 @@
-% k = nombre de veïns que knn té en compte
+% k = nombre de veins que knn te en compte
 
 % numbins = sombre de bins de l'hisotgrama
 
@@ -7,17 +7,17 @@
 % rgb_hsv_hs == 3 : histograma en HS
 % rgb_hsv_hs == 4 : histograma en H
 
-% metode_tria_finestra indica el mètode amb què l'algoritme tria la
-%                       finestra òptima a test/validació
-% metode_tria_finestra == 1 : mètode 1
-% metode_tria_finestra == 2 : mètode 2
+% metode_tria_finestra indica el metode amb que l'algoritme tria la
+%                       finestra optima a test/validacio
+% metode_tria_finestra == 1 : metode 1
+% metode_tria_finestra == 2 : metode 2
 
-% indexs_imatges = conjunt d'índexs d'imatges de test/validació 
+% indexs_imatges = conjunt d'indexs d'imatges de test/validacio 
 
 % plot == 0 : no facis plots
-% plot == 1 : fes plots de la matriu de confusió, etc
+% plot == 1 : fes plot de la matriu de confusio, i mostra accuracy
 
-function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_imatges, plot_)
+function [accuracy, time] = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_imatges, plot_)
 
 
     %%%%%% TRAIN %%%%%%
@@ -51,10 +51,10 @@ function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_im
     
     
 
-    %%%%%% VALIDACIÓ / TEST %%%%%%
+    %%%%%% VALIDACIO / TEST %%%%%%
 
     aux = 1;
-    %loop_time = 0;
+    loop_time = 0;
     for j = 1 : num_equips
         equip = equips(j);
         class = j;
@@ -63,10 +63,10 @@ function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_im
         for i = indexs_imatges % recorrem les imatges de l'equip
             fn = getFilename(convertStringsToChars(equip), i);
             I = imread(fn);
+            tic;
             if rgb_hsv_hs > 1
                 I = rgb2hsv(I);
             end
-            %tic;
             sz = size(I);
             Idimensions = [sz(2), sz(1), sz(2), sz(1)];
             f = 1;
@@ -88,7 +88,7 @@ function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_im
                     predictions = predictions(isnan_diff);
                     dist = dist(isnan_diff);
                     [m,f] = min(dist);
-                else % en tots els casos knn s'ha trobat amb més d'un equip
+                else % en tots els casos knn s'ha trobat amb mes d'un equip
                     [m,f] = max(diff);
                 end
             end
@@ -107,9 +107,10 @@ function accuracy = main(k, numbins, rgb_hsv_hs, metode_tria_finestra, indexs_im
             %labels(j) = class;
             
             aux=aux+1;
-            %loop_time = loop_time + toc;
+            loop_time = loop_time + toc;
         end
     end
+    time = loop_time / (aux-1);
 
     
     %real = labels == "b";
