@@ -1,5 +1,5 @@
 clear
-indexs_imatges = 27:36;
+indexs_imatges = 27:41;
 numbins = 7;
 %metode_tria_finestra = 2;
 rgb_hsv_hs = 2; %hsv
